@@ -4,7 +4,7 @@ import { createApp } from "./setup/app";
 
 async function main() {
   const httpPort = 3456;
-  const app = await createApp("dev server", addApiRoutes);
+  const app = await createApp("local server", addApiRoutes);
   const server = createServer(app);
   server.listen(httpPort, () => {
     console.log(`Server is running at http://localhost:${httpPort}`);

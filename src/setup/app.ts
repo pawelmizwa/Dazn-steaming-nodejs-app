@@ -77,10 +77,11 @@ export const createApp = async (
   functionName: string,
   applyRoutes: (router: Router, appConfig: AppConfig) => void
 ) => {
+  logger.info(`${functionName} app creating`);
   const { app, appConfig } = await initApp();
   const router = Router();
-  router.get("/echo", (_req: Request, res: Response) => {
-    res.status(200).send({ message: `echo from: ${functionName}` });
+  router.get("/", (_req: Request, res: Response) => {
+    res.sendFile(__dirname + "/index.html");
   });
   applyRoutes(router, appConfig);
   app.use(appConfig.restPrefix, router);
