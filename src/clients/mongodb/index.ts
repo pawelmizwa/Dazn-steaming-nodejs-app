@@ -20,7 +20,11 @@ export function createDbClient(appConfig: AppConfig) {
   return Object.freeze({
     addUser({ userId, email, password }: { userId: string; email: string; password: string }) {
       logger.info("[DbClient].addUser", { userId, email });
-      db.collection("users").insertOne({ userId, email, password });
+      return db.collection("users").insertOne({ userId, email, password });
+    },
+    getUser({ email }: { email: string }) {
+      logger.info("[DbClient].addUser", { email });
+      return db.collection("users").findOne({ email });
     },
   });
 }

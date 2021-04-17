@@ -1,4 +1,4 @@
-import express, { Express, NextFunction, Request, Response, Router } from "express";
+import express, { Express, NextFunction, Response, Router, Request } from "express";
 import helmet from "helmet";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -7,6 +7,8 @@ import { AppConfig, readAppConfig } from "general/setup/config";
 import cookieParser from "cookie-parser";
 import { requestLoggingMiddleware } from "general/middlewares/logging";
 import { createDbClient, DbClient } from "general/clients/mongodb";
+import { authenticateUser } from "general/middlewares/auth";
+import cookieSession from "cookie-session";
 
 const CORS_OPTIONS = {
   origin: [/http:\/\/localhost\:\d+/],
@@ -38,7 +40,14 @@ async function createAppBase(appConfig: AppConfig) {
     })
   );
   app.use(cors(CORS_OPTIONS));
+  app.set("view engine", "ejs");
+  app.use(express.static("public"));
   app.use(cookieParser());
+  app.use(
+    cookieSession({
+      keys: ["random"],
+    })
+  );
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(requestLoggingMiddleware(appConfig));
@@ -47,7 +56,7 @@ async function createAppBase(appConfig: AppConfig) {
 
 export async function initApp() {
   const appConfig = await readAppConfig();
-  const dbClient = createDbClient(appConfig);
+  const dbClient = await createDbClient(appConfig);
   const app = await createAppBase(appConfig);
   return {
     app,
@@ -83,9 +92,23 @@ export const createApp = async (
   logger.info(`${functionName} app creating`);
   const { app, appConfig, dbClient } = await initApp();
   const router = Router();
-  router.get("/", (_req: Request, res: Response) => {
-    res.sendFile(__dirname + "/index.html");
-  });
+  app
+    .get("/", (_req, res) => {
+      res.render("index");
+    })
+    .get("/login", (_req, res) => {
+      res.render("login");
+    })
+    .get("/register", (_req, res) => {
+      res.render("register");
+    })
+    .get("/home", authenticateUser, (req, res) => {
+      res.render("home", { user: req.session?.user });
+    })
+    .get("/logout", authenticateUser, (req, res) => {
+      req.session!.user = null;
+      res.redirect("/login");
+    });
   applyRoutes(router, appConfig, dbClient);
   app.use(appConfig.restPrefix, router);
   addErrorHandler(app);
