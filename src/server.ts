@@ -3,7 +3,7 @@ import { addApiRoutes } from "./setup/router";
 import { createApp } from "./setup/app";
 
 async function main() {
-  const httpPort = 3456;
+  const httpPort = 3000;
   const app = await createApp("local server", addApiRoutes);
   const server = createServer(app);
   server.listen(httpPort, () => {

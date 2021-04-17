@@ -13,11 +13,13 @@ export async function readAppConfig(): Promise<AppConfig> {
   const { readRequiredString } = envReader;
 
   const environment = readRequiredString("ENVIRONMENT") as Environment;
+  const mongoUri = readRequiredString("MONGO_URI");
   const restPrefix = readRequiredString("REST_PREFIX");
 
   return transformToClass(AppConfig, {
     environment,
     restPrefix,
+    mongoUri,
   });
 }
 
@@ -28,4 +30,7 @@ export class AppConfig {
 
   @IsString()
   readonly restPrefix: string;
+
+  @IsString()
+  readonly mongoUri: string;
 }

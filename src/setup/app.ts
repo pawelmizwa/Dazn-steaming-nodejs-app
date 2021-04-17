@@ -6,6 +6,7 @@ import logger from "general/utils/logger";
 import { AppConfig, readAppConfig } from "general/setup/config";
 import cookieParser from "cookie-parser";
 import { requestLoggingMiddleware } from "general/middlewares/logging";
+import { createDbClient, DbClient } from "general/clients/mongodb";
 
 const CORS_OPTIONS = {
   origin: [/http:\/\/localhost\:\d+/],
@@ -46,10 +47,12 @@ async function createAppBase(appConfig: AppConfig) {
 
 export async function initApp() {
   const appConfig = await readAppConfig();
+  const dbClient = createDbClient(appConfig);
   const app = await createAppBase(appConfig);
   return {
     app,
     appConfig,
+    dbClient,
   };
 }
 
@@ -75,15 +78,15 @@ export function addErrorHandler(app: Express) {
 
 export const createApp = async (
   functionName: string,
-  applyRoutes: (router: Router, appConfig: AppConfig) => void
+  applyRoutes: (router: Router, appConfig: AppConfig, dbClient: DbClient) => void
 ) => {
   logger.info(`${functionName} app creating`);
-  const { app, appConfig } = await initApp();
+  const { app, appConfig, dbClient } = await initApp();
   const router = Router();
   router.get("/", (_req: Request, res: Response) => {
     res.sendFile(__dirname + "/index.html");
   });
-  applyRoutes(router, appConfig);
+  applyRoutes(router, appConfig, dbClient);
   app.use(appConfig.restPrefix, router);
   addErrorHandler(app);
   app.set("json spaces", 4);
